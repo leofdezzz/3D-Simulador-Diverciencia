@@ -1,0 +1,224 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  overflow: hidden;
+  background: #04080f;
+  font-family: "Segoe UI", sans-serif;
+}
+
+canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 0;
+}
+
+#ui {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  width: 262px;
+  padding: 18px;
+  color: #c8e4ff;
+  background: rgba(4, 8, 18, 0.93);
+  border: 1px solid rgba(80, 180, 255, 0.2);
+  border-radius: 14px;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.7);
+  z-index: 10;
+}
+
+#ui[hidden] {
+  display: none;
+}
+
+.ui-title {
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64c8ff;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  border-bottom: 1px solid rgba(80, 180, 255, 0.15);
+}
+
+.section {
+  margin-bottom: 11px;
+}
+
+.lbl {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+  font-size: 10px;
+  color: #7aa8cc;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.lbl span {
+  color: #64c8ff;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.side-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+}
+
+.sb {
+  padding: 7px 2px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  color: #8ab8dd;
+  background: rgba(15, 40, 70, 0.6);
+  border: 1px solid rgba(70, 130, 190, 0.3);
+  border-radius: 7px;
+  cursor: pointer;
+  transition: 0.15s all;
+}
+
+.sb:hover {
+  background: rgba(25, 60, 110, 0.8);
+  border-color: rgba(100, 180, 255, 0.5);
+}
+
+.sb.active {
+  color: #fff;
+  background: rgba(15, 90, 190, 0.7);
+  border-color: #64c8ff;
+  box-shadow: 0 0 10px rgba(100, 200, 255, 0.3);
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 3px;
+  margin-top: 2px;
+  background: rgba(70, 130, 190, 0.3);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 13px;
+  height: 13px;
+  background: #64c8ff;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(100, 200, 255, 0.6);
+}
+
+#btn {
+  width: 100%;
+  margin-top: 4px;
+  padding: 11px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #c8e4ff;
+  letter-spacing: 0.5px;
+  background: linear-gradient(135deg, rgba(15, 80, 170, 0.85), rgba(8, 50, 110, 0.9));
+  border: 1px solid rgba(80, 170, 255, 0.4);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s all;
+}
+
+#btn:hover {
+  background: linear-gradient(135deg, rgba(25, 105, 205, 0.9), rgba(12, 65, 140, 0.9));
+  box-shadow: 0 0 22px rgba(80, 200, 255, 0.25);
+}
+
+#btn.seeking {
+  color: #ffd0a0;
+  background: linear-gradient(135deg, rgba(170, 75, 15, 0.85), rgba(110, 45, 8, 0.9));
+  border-color: rgba(255, 145, 70, 0.5);
+}
+
+.divider {
+  height: 1px;
+  margin: 10px 0;
+  background: rgba(80, 180, 255, 0.12);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+
+.stat {
+  padding: 8px;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 7px;
+}
+
+.sv {
+  margin: 2px 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #64c8ff;
+}
+
+.sl {
+  font-size: 9px;
+  color: #4a7a9a;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+#status {
+  min-height: 30px;
+  margin-top: 9px;
+  padding: 7px 9px;
+  font-size: 10px;
+  line-height: 1.5;
+  color: #5a8aaa;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 6px;
+}
+
+.hint {
+  position: fixed;
+  bottom: 14px;
+  left: 50%;
+  z-index: 10;
+  padding: 5px 16px;
+  font-size: 10px;
+  color: #4a7a9a;
+  background: rgba(4, 8, 18, 0.75);
+  border: 1px solid rgba(80, 180, 255, 0.15);
+  border-radius: 20px;
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+
+#loading {
+  position: fixed;
+  inset: 0;
+  z-index: 99;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: #64c8ff;
+  background: #04080f;
+}
+
+.loading-note {
+  font-size: 10px;
+  color: #2a5070;
+}
