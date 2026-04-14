@@ -5,10 +5,12 @@ const BUTTON_LABEL = "Buscar posicion optima";
 
 function setupUI(simulator) {
   const sideButtons = Array.from(document.querySelectorAll(".sb"));
+  const rotorButtons = Array.from(document.querySelectorAll(".rb"));
   const positionSlider = document.getElementById("sPos");
   const powerSlider = document.getElementById("sPow");
   const positionValue = document.getElementById("vPos");
   const powerValue = document.getElementById("vPow");
+  const rotorValue = document.getElementById("vRotor");
   const status = document.getElementById("status");
   const actionButton = document.getElementById("btn");
   const rpmValue = document.getElementById("rpm");
@@ -32,6 +34,15 @@ function setupUI(simulator) {
     const rawValue = Number(event.target.value);
     powerValue.textContent = `${rawValue}%`;
     simulator.setPower(rawValue / 100);
+  });
+
+  rotorButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      rotorButtons.forEach((item) => item.classList.remove("active"));
+      button.classList.add("active");
+      rotorValue.textContent = button.textContent;
+      simulator.setRotorType(button.dataset.rotor);
+    });
   });
 
   actionButton.addEventListener("click", () => {
@@ -59,6 +70,7 @@ function setupUI(simulator) {
   simulator.onReady(() => {
     positionValue.textContent = `${positionSlider.value}%`;
     powerValue.textContent = `${powerSlider.value}%`;
+    rotorValue.textContent = rotorButtons.find((button) => button.classList.contains("active")).textContent;
     status.textContent = DEFAULT_STATUS;
   });
 }

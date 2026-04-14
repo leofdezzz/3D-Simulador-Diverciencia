@@ -27,6 +27,7 @@ class FloatingFarmSimulator {
     this.constants.RAIL_Y = this.constants.yTop + 0.3;
 
     this.state = { side: "N", pos: 0.5, power: 0.7 };
+    this.rotorConfig = { type: "two-blades" };
     this.turbineState = {
       target: new THREE.Vector3(0, 0, 0),
       rotSpeed: 0,
@@ -37,6 +38,8 @@ class FloatingFarmSimulator {
     this.sides = this.createSides();
     this.tmpDir = new THREE.Vector3();
     this.up = new THREE.Vector3(0, 1, 0);
+    this.cameraSideVector = new THREE.Vector3();
+    this.anchorOffset = new THREE.Vector3();
 
     this.prevCableLens = [null, null, null, null];
     this.spoolAngles = [0, 0, 0, 0];
@@ -55,6 +58,7 @@ class FloatingFarmSimulator {
     this.glowRing = null;
     this.turbineGroup = null;
     this.rotorGroup = null;
+    this.rotorAssembly = null;
 
     this.PC = 260;
     this.pGeo = null;
@@ -119,6 +123,11 @@ class FloatingFarmSimulator {
 
   setPower(power) {
     this.state.power = power;
+  }
+
+  setRotorType(type) {
+    this.rotorConfig.type = type === "three-blades" ? "three-blades" : "two-blades";
+    this.rebuildRotor();
   }
 
   seekOptimalPosition() {
@@ -429,8 +438,6 @@ class FloatingFarmSimulator {
     const flangeMaterial = new THREE.MeshPhongMaterial({ color: 0x445a6a, shininess: 100 });
     const boltMaterial = new THREE.MeshPhongMaterial({ color: 0x8899bb, shininess: 140 });
     const ropeWrapMaterial = new THREE.MeshPhongMaterial({ color: 0xc8a83c, shininess: 15 });
-    const wireBlackMaterial = new THREE.MeshPhongMaterial({ color: 0x111111, shininess: 10 });
-    const wireRedMaterial = new THREE.MeshPhongMaterial({ color: 0xaa2222, shininess: 10 });
     const baseMaterial = new THREE.MeshPhongMaterial({ color: 0x1a2530, shininess: 60 });
     const terminalMaterial = new THREE.MeshPhongMaterial({ color: 0xddcc44, shininess: 120 });
 
@@ -544,16 +551,6 @@ class FloatingFarmSimulator {
         terminal.position.set(1.01, y, z);
         winchGroup.add(terminal);
       });
-
-      const blackWire = new THREE.Mesh(new THREE.CylinderGeometry(0.013, 0.013, 0.38, 6), wireBlackMaterial);
-      blackWire.rotation.set(0.3, 0, 0.5);
-      blackWire.position.set(1.05, -0.14, 0.12);
-      winchGroup.add(blackWire);
-
-      const redWire = new THREE.Mesh(new THREE.CylinderGeometry(0.013, 0.013, 0.38, 6), wireRedMaterial);
-      redWire.rotation.set(0.4, 0, 0.55);
-      redWire.position.set(1.05, -0.12, -0.12);
-      winchGroup.add(redWire);
 
       const cableGuide = new THREE.Mesh(new THREE.TorusGeometry(0.052, 0.022, 8, 18), boltMaterial);
       cableGuide.rotation.x = Math.PI / 2;
@@ -670,34 +667,115 @@ class FloatingFarmSimulator {
     this.rotorGroup = new THREE.Group();
     this.rotorGroup.position.y = rotorCenterY;
     this.turbineGroup.add(this.rotorGroup);
+    this.rebuildRotor();
+  }
 
-    const savRadius = 0.52;
-    const savGeometry = new THREE.CylinderGeometry(savRadius, savRadius, rotorHeight - 0.12, 26, 1, false, 0, Math.PI);
-    const shellA = new THREE.Mesh(
-      savGeometry,
-      new THREE.MeshPhongMaterial({ color: 0x1155bb, side: THREE.DoubleSide, shininess: 80, transparent: true, opacity: 0.92 })
+  rebuildRotor() {
+    if (!this.rotorGroup) {
+      return;
+    }
+
+    if (this.rotorAssembly) {
+      this.rotorGroup.remove(this.rotorAssembly);
+    }
+
+    const rotorAssembly = new THREE.Group();
+    const shellMaterials = [
+      new THREE.MeshPhongMaterial({ color: 0x1155bb, side: THREE.DoubleSide, shininess: 80, transparent: true, opacity: 0.92 }),
+      new THREE.MeshPhongMaterial({ color: 0x2288dd, side: THREE.DoubleSide, shininess: 80, transparent: true, opacity: 0.92 }),
+      new THREE.MeshPhongMaterial({ color: 0x2a6fdb, side: THREE.DoubleSide, shininess: 80, transparent: true, opacity: 0.92 }),
+    ];
+
+    if (this.rotorConfig.type === "three-blades") {
+      this.buildThreeBladesRotor(rotorAssembly, shellMaterials);
+    } else {
+      this.buildTwoBladesRotor(rotorAssembly, shellMaterials);
+    }
+
+    this.rotorAssembly = rotorAssembly;
+    this.rotorGroup.add(rotorAssembly);
+  }
+
+  createHalfBlade(radius, height, material) {
+    const blade = new THREE.Mesh(
+      new THREE.CylinderGeometry(radius, radius, height, 28, 1, false, 0, Math.PI),
+      material
     );
-    shellA.position.x = savRadius * 0.5;
-    shellA.castShadow = true;
-    this.rotorGroup.add(shellA);
+    blade.castShadow = true;
+    return blade;
+  }
 
-    const shellB = new THREE.Mesh(
-      savGeometry,
-      new THREE.MeshPhongMaterial({ color: 0x2288dd, side: THREE.DoubleSide, shininess: 80, transparent: true, opacity: 0.92 })
-    );
-    shellB.rotation.y = Math.PI;
-    shellB.position.x = -savRadius * 0.5;
-    shellB.castShadow = true;
-    this.rotorGroup.add(shellB);
-
+  addRotorStruts(rotorAssembly, config) {
     const strutMaterial = new THREE.MeshPhongMaterial({ color: 0x334466 });
-    [-0.72, 0, 0.72].forEach((y) => {
-      [savRadius * 0.42, -savRadius * 0.42].forEach((x) => {
-        const strut = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, savRadius * 1.05, 6), strutMaterial);
+    config.levels.forEach((y) => {
+      config.angles.forEach((angle) => {
+        const strut = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.022, 0.022, config.length, 6),
+          strutMaterial
+        );
         strut.rotation.z = Math.PI / 2;
-        strut.position.set(x, y, 0);
-        this.rotorGroup.add(strut);
+        strut.rotation.y = angle;
+        strut.position.set(
+          Math.cos(angle) * config.offset,
+          y,
+          Math.sin(angle) * config.offset
+        );
+        rotorAssembly.add(strut);
       });
+    });
+  }
+
+  buildThreeBladesRotor(rotorAssembly, shellMaterials) {
+    const bladeRadius = 0.34;
+    const bladeHeight = 1.98;
+    const bladeOffset = bladeRadius * 0.5;
+    const bladeCount = 3;
+    const strutAngles = [];
+
+    for (let bladeIndex = 0; bladeIndex < bladeCount; bladeIndex += 1) {
+      const angle = (bladeIndex / bladeCount) * Math.PI * 2;
+      const blade = this.createHalfBlade(bladeRadius, bladeHeight, shellMaterials[bladeIndex % shellMaterials.length]);
+      blade.position.set(
+        Math.cos(angle) * bladeOffset,
+        0,
+        Math.sin(angle) * bladeOffset
+      );
+      // Cuerda radial, curva tangencial → molinete Savonius
+      blade.rotation.y = -Math.PI / 2 + 2 * angle;
+      rotorAssembly.add(blade);
+      strutAngles.push(angle);
+    }
+
+    this.addRotorStruts(rotorAssembly, {
+      angles: strutAngles,
+      levels: [-0.72, 0, 0.72],
+      length: bladeRadius * 0.8,
+      offset: bladeRadius * 0.4,
+    });
+  }
+
+  buildTwoBladesRotor(rotorAssembly, shellMaterials) {
+    const bladeRadius = 0.42;
+    const bladeHeight = 1.98;
+    const bladeOffset = bladeRadius * 0.35;
+
+    // Pala A: desplazada +Z, curva hacia +X
+    const bladeA = this.createHalfBlade(bladeRadius, bladeHeight, shellMaterials[0]);
+    bladeA.position.set(0, 0, bladeOffset);
+    bladeA.rotation.y = 0;
+    rotorAssembly.add(bladeA);
+
+    // Pala B: desplazada -Z, curva hacia -X (forma S con pala A)
+    const bladeB = this.createHalfBlade(bladeRadius, bladeHeight, shellMaterials[1]);
+    bladeB.position.set(0, 0, -bladeOffset);
+    bladeB.rotation.y = Math.PI;
+    rotorAssembly.add(bladeB);
+
+    this.addRotorStruts(rotorAssembly, {
+      angles: [0, Math.PI],
+      levels: [-0.72, 0, 0.72],
+      length: bladeRadius * 0.8,
+      offset: bladeRadius * 0.4,
     });
   }
 
@@ -790,6 +868,13 @@ class FloatingFarmSimulator {
     const { CABLE_Y, SPOOL_R } = this.constants;
     const tx = this.turbineGroup.position.x;
     const tz = this.turbineGroup.position.z;
+    const turbinePosition = this.turbineGroup.position;
+
+    this.cameraSideVector.subVectors(this.camera.position, turbinePosition).setY(0);
+
+    if (this.cameraSideVector.lengthSq() > 0.0001) {
+      this.cameraSideVector.normalize();
+    }
 
     this.anchorPts.forEach((anchor, index) => {
       const dx = tx - anchor.x;
@@ -805,6 +890,8 @@ class FloatingFarmSimulator {
       this.tmpDir.set(dx, 0, dz).normalize();
       this.cableMeshes[index].quaternion.setFromUnitVectors(this.up, this.tmpDir);
       this.sheaveGroups[index].rotation.y = Math.atan2(-dz, dx) + Math.PI / 2;
+      this.anchorOffset.set(anchor.x - turbinePosition.x, 0, anchor.z - turbinePosition.z);
+      this.cableMeshes[index].visible = this.anchorOffset.dot(this.cameraSideVector) >= 0;
 
       if (this.prevCableLens[index] !== null) {
         this.spoolAngles[index] += (len - this.prevCableLens[index]) / SPOOL_R;
