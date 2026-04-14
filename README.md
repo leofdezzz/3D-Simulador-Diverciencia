@@ -154,16 +154,23 @@ Cuando el usuario pulsa `Buscar posicion optima`:
 
 ## Como ejecutar el proyecto
 
-Como usa modulos ES (`type="module"`), conviene abrirlo desde un servidor local en lugar de abrir el archivo HTML directamente.
+La version actual vuelve a funcionar directamente abriendo `index.html` en el navegador, porque los archivos JavaScript estan separados pero cargados como scripts clasicos.
 
-### Opcion 1: Visual Studio Code + Live Server
+Tambien puedes usar un servidor local si lo prefieres.
+
+### Opcion 1: abrir el archivo directamente
+
+1. Abre `index.html` en tu navegador.
+2. Espera a que carguen `Three.js` y `OrbitControls` desde CDN.
+
+### Opcion 2: Visual Studio Code + Live Server
 
 1. Abre la carpeta del proyecto en VS Code.
 2. Instala la extension `Live Server` si no la tienes.
 3. Haz click derecho sobre `index.html`.
 4. Selecciona `Open with Live Server`.
 
-### Opcion 2: Python
+### Opcion 3: Python
 
 Si tienes Python instalado:
 
@@ -177,7 +184,7 @@ Despues abre:
 http://localhost:8000
 ```
 
-### Opcion 3: Node.js
+### Opcion 4: Node.js
 
 Si tienes `npx` disponible:
 

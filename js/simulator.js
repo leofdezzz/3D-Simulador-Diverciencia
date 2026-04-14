@@ -1,6 +1,6 @@
 const THREE = window.THREE;
 
-export class FloatingFarmSimulator {
+class FloatingFarmSimulator {
   constructor({ container }) {
     this.container = container;
     this.scene = null;
@@ -903,3 +903,5 @@ export class FloatingFarmSimulator {
     this.renderer.setSize(innerWidth, innerHeight);
   }
 }
+
+window.FloatingFarmSimulator = FloatingFarmSimulator;

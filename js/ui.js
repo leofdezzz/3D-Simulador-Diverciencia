@@ -3,7 +3,7 @@ const SEEKING_LABEL = "Posicionando...";
 const SEEKING_STATUS = "Calculando flujo y tensando cabrestantes.";
 const BUTTON_LABEL = "Buscar posicion optima";
 
-export function setupUI(simulator) {
+function setupUI(simulator) {
   const sideButtons = Array.from(document.querySelectorAll(".sb"));
   const positionSlider = document.getElementById("sPos");
   const powerSlider = document.getElementById("sPow");
@@ -62,3 +62,5 @@ export function setupUI(simulator) {
     status.textContent = DEFAULT_STATUS;
   });
 }
+
+window.setupUI = setupUI;
