@@ -593,22 +593,39 @@ class FloatingFarmSimulator {
     this.bladeSpinner = new THREE.Group();
     this.fanGroup.add(this.bladeSpinner);
 
-    const hub = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.06, 0.06, 0.16, 8),
-      new THREE.MeshPhongMaterial({ color: 0x445566, shininess: 100 })
-    );
+    const hubMaterial = new THREE.MeshPhongMaterial({ color: 0x445566, shininess: 100 });
+    const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.18, 12), hubMaterial);
     hub.rotation.x = Math.PI / 2;
     this.bladeSpinner.add(hub);
 
+    const nose = new THREE.Mesh(new THREE.SphereGeometry(0.055, 12, 12), hubMaterial);
+    nose.position.z = 0.055;
+    this.bladeSpinner.add(nose);
+
     for (let bladeIndex = 0; bladeIndex < 5; bladeIndex += 1) {
-      const blade = new THREE.Mesh(
-        new THREE.BoxGeometry(0.055, 0.27, 0.045),
-        new THREE.MeshPhongMaterial({ color: 0x2266aa, shininess: 70 })
-      );
       const angle = (bladeIndex / 5) * Math.PI * 2;
-      blade.position.set(Math.sin(angle) * 0.14, Math.cos(angle) * 0.14, 0);
-      blade.rotation.z = angle;
-      this.bladeSpinner.add(blade);
+      const bladeRoot = new THREE.Group();
+      bladeRoot.rotation.z = angle;
+
+      const blade = new THREE.Mesh(
+        new THREE.BoxGeometry(0.05, 0.34, 0.018),
+        new THREE.MeshPhongMaterial({ color: 0x2266aa, shininess: 90 })
+      );
+      blade.position.set(0, 0.19, 0);
+      blade.rotation.x = -0.32;
+      blade.rotation.z = -0.28;
+      bladeRoot.add(blade);
+
+      const bladeTip = new THREE.Mesh(
+        new THREE.BoxGeometry(0.038, 0.12, 0.014),
+        new THREE.MeshPhongMaterial({ color: 0x2f7fd2, shininess: 90 })
+      );
+      bladeTip.position.set(0, 0.36, -0.015);
+      bladeTip.rotation.x = -0.22;
+      bladeTip.rotation.z = -0.18;
+      bladeRoot.add(bladeTip);
+
+      this.bladeSpinner.add(bladeRoot);
     }
 
     this.glowRing = new THREE.Mesh(
@@ -836,6 +853,40 @@ class FloatingFarmSimulator {
     return this.state.power * Math.exp(-distance * 0.11) * Math.exp(-lateralDistance * 0.85) * alignment;
   }
 
+  getRotorSpec() {
+    if (this.rotorConfig.type === "three-blades") {
+      const bladeRadius = 0.34;
+      const bladeOffset = bladeRadius * 0.92;
+
+      return {
+        // Valor de TSR maximo tomado como referencia para un Savonius de 3 palas a alta relacion de velocidad.
+        tipSpeedRatio: 0.555,
+        diameter: 2 * (bladeRadius + bladeOffset),
+      };
+    }
+
+    const bladeRadius = 0.42;
+    const bladeOffset = bladeRadius * 0.78;
+
+    return {
+      // Aproximacion conservadora para 2 palas, menor TSR objetivo que el de 3 palas.
+      tipSpeedRatio: 0.48,
+      diameter: 2 * (bladeRadius + bladeOffset),
+    };
+  }
+
+  calculateTargetRpm(windEffect) {
+    const { tipSpeedRatio, diameter } = this.getRotorSpec();
+    const effectiveWindSpeed = 24 * windEffect;
+
+    if (effectiveWindSpeed <= 0 || diameter <= 0) {
+      return 0;
+    }
+
+    // TSR = (pi * D * RPM) / (60 * V)  =>  RPM = (60 * TSR * V) / (pi * D)
+    return (60 * tipSpeedRatio * effectiveWindSpeed) / (Math.PI * diameter);
+  }
+
   resetParticle(index) {
     const fanPosition = this.getFanPos();
     const fanDirection = this.getFanDir();
@@ -943,7 +994,8 @@ class FloatingFarmSimulator {
     this.turbineGroup.rotation.z = Math.sin(elapsedTime * 1.1 + 0.5) * 0.012;
 
     const windEffect = this.getWindEffect();
-    this.turbineState.rotSpeed += (windEffect * 240 - this.turbineState.rotSpeed) * deltaTime * 1.6;
+    const targetRpm = this.calculateTargetRpm(windEffect);
+    this.turbineState.rotSpeed += (targetRpm - this.turbineState.rotSpeed) * deltaTime * 1.6;
     this.rotorGroup.rotation.y += (this.turbineState.rotSpeed / 60) * Math.PI * 2 * deltaTime;
 
     if (this.turbineState.seeking) {
