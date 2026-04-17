@@ -1,7 +1,5 @@
 # Floating Farm - Simulador 3D
 
-![Vista 3D del simulador](assets/images/simulador_3d.png)
-
 Simulador 3D interactivo de una plataforma flotante con turbina Savonius dentro de un tanque, construido con `Three.js` y servido como sitio estatico. La aplicacion permite mover un ventilador sobre railes, variar su potencia y lanzar una busqueda automatica de la posicion que maximiza el viento efectivo sobre la turbina.
 
 ## Objetivo del proyecto

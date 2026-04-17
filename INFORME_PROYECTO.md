@@ -2,12 +2,6 @@
 
 ---
 
-![Vista 3D del simulador del sistema de posicionamiento](assets/images/simulador_3d.png)
-
-*Figura 1: Vista isométrica del simulador 3D. Se observa el tanque de plástico, la plataforma flotante central, los cuatro cabrestantes en las esquinas y los cables de posicionamiento.*
-
----
-
 ## 1. Descripción General del Proyecto
 
 El proyecto consiste en el diseño, construcción y simulación de un **sistema de posicionamiento automático** para un aerogenerador flotante dentro de un tanque de plástico con agua. El objetivo principal es mover la plataforma flotante del aerogenerador hacia la posición que maximice la captación de viento y, por ende, maximice el voltaje generado.
